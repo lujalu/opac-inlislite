@@ -75,11 +75,11 @@ LIMIT :limit OFFSET :offset;
 
 4. Buka `https://domain-anda.example/opac-inlislite.php`. Uji pencarian judul, pengarang, ISBN, barcode, subjek, dan nomor panggil.
 
-## Instalasi pada HestiaCP
+## Instalasi pada CPANEL
 
-1. Masuk ke HestiaCP, pilih **WEB**, lalu buka domain tujuan.
+1. Masuk ke Control Panel
 2. Upload file ke document root domain, misalnya:
-   `/home/USER/web/DOMAIN/public_html/opac-inlislite.php`.
+   `/home/USER/DOMAIN/public_html/opac-inlislite.php`.
 3. Pastikan versi PHP domain menyediakan `pdo_mysql` (PHP-FPM 8.2/8.3 umum dipakai pada Snowi).
 4. Buat database dan user melalui menu **DB**, atau gunakan database InlisLite yang sudah ada. Jika database berada di host lain, ubah `DB_HOST` dan izinkan koneksi dari server web.
 5. Uji URL melalui HTTPS. Jika halaman menampilkan pesan katalog belum dapat diakses, periksa kredensial, nama database, izin `SELECT` pada keempat tabel, ekstensi `pdo_mysql`, dan log PHP-FPM/Apache.
