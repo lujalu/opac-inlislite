@@ -1,13 +1,52 @@
 # OPAC InlisLite Portabel
 
-Halaman PHP mandiri untuk menampilkan dan mencari katalog InlisLite melalui view atau tabel `v_opaconline2`. Aplikasi tidak membutuhkan framework, Composer, atau build step.
+Halaman PHP mandiri (`opac-inlislite.php`) untuk menampilkan dan mencari katalog InlisLite langsung dari tabel database standar (`collections`, `catalogs`, `locations`, dan `collectionstatus`). Aplikasi tidak membutuhkan framework, Composer, database view tambahan (`v_opaconline2`), atau build step.
 
 ## Persyaratan
 
 - PHP 7.4 atau lebih baru dengan ekstensi `pdo` dan `pdo_mysql`.
-- MySQL 5.7+/MariaDB dengan akses baca ke sumber katalog.
+- MySQL 5.7+/MariaDB dengan akses baca (`SELECT`) ke database InlisLite.
 - Web server Apache atau Nginx yang menjalankan PHP-FPM.
-- View/tabel katalog bernama `v_opaconline2` dengan kolom berikut: `ID`, `NomorBarcode`, `Title`, `Author`, `Publikasi`, `ISBN`, `PhysicalDescription`, `Subject`, `CallNumber`, `Lokasi`, dan `Status`.
+- Database InlisLite standar dengan tabel `collections`, `catalogs`, `locations`, dan `collectionstatus`.
+
+## Relasi Tabel & Query Langsung
+
+Aplikasi melakukan `INNER JOIN` langsung ke empat tabel dasar InlisLite sehingga menghasilkan jumlah baris yang identik dengan view `v_opaconline2` (terverifikasi **239.391 baris** pada database production `inlis20117`):
+
+```d2
+direction: right
+collections: "collections (col)\nID, NomorBarcode, CallNumber,\nCatalog_id, Location_id, Status_id"
+catalogs: "catalogs (cat)\nID, Title, Author, Publikasi,\nISBN, PhysicalDescription, Subject"
+locations: "locations (loc)\nID, Name (Lokasi)"
+collectionstatus: "collectionstatus (stat)\nID, Name (Status)"
+
+collections -> catalogs: "col.Catalog_id = cat.ID"
+collections -> locations: "col.Location_id = loc.ID"
+collections -> collectionstatus: "col.Status_id = stat.ID"
+```
+
+```sql
+SELECT
+  col.ID,
+  col.NomorBarcode,
+  cat.Title,
+  cat.Author,
+  cat.Publikasi,
+  cat.ISBN,
+  cat.PhysicalDescription,
+  cat.Subject,
+  col.CallNumber,
+  loc.Name AS Lokasi,
+  stat.Name AS Status
+FROM collections AS col
+INNER JOIN catalogs AS cat ON cat.ID = col.Catalog_id
+INNER JOIN locations AS loc ON loc.ID = col.Location_id
+INNER JOIN collectionstatus AS stat ON stat.ID = col.Status_id
+WHERE 1=1
+  -- filter opsional (:q1 s.d. :q6) untuk Title, Author, ISBN, Subject, NomorBarcode, CallNumber
+ORDER BY cat.Title ASC
+LIMIT :limit OFFSET :offset;
+```
 
 ## Instalasi cepat
 
@@ -24,10 +63,13 @@ Halaman PHP mandiri untuk menampilkan dan mencari katalog InlisLite melalui view
 
    Gunakan user database khusus baca dan batasi host sesuai kebutuhan. Jangan menyimpan password yang sama dengan password SSH atau panel.
 
-3. Pastikan user database dapat membaca sumber katalog:
+3. Pastikan user database dapat membaca keempat tabel katalog:
 
    ```sql
-   GRANT SELECT ON nama_database.v_opaconline2 TO 'user_baca'@'localhost';
+   GRANT SELECT ON nama_database.collections TO 'user_baca'@'localhost';
+   GRANT SELECT ON nama_database.catalogs TO 'user_baca'@'localhost';
+   GRANT SELECT ON nama_database.locations TO 'user_baca'@'localhost';
+   GRANT SELECT ON nama_database.collectionstatus TO 'user_baca'@'localhost';
    FLUSH PRIVILEGES;
    ```
 
@@ -40,7 +82,7 @@ Halaman PHP mandiri untuk menampilkan dan mencari katalog InlisLite melalui view
    `/home/USER/web/DOMAIN/public_html/opac-inlislite.php`.
 3. Pastikan versi PHP domain menyediakan `pdo_mysql` (PHP-FPM 8.2/8.3 umum dipakai pada Snowi).
 4. Buat database dan user melalui menu **DB**, atau gunakan database InlisLite yang sudah ada. Jika database berada di host lain, ubah `DB_HOST` dan izinkan koneksi dari server web.
-5. Uji URL melalui HTTPS. Jika halaman menampilkan pesan katalog belum dapat diakses, periksa kredensial, nama database, nama view, ekstensi `pdo_mysql`, dan log PHP-FPM/Apache.
+5. Uji URL melalui HTTPS. Jika halaman menampilkan pesan katalog belum dapat diakses, periksa kredensial, nama database, izin `SELECT` pada keempat tabel, ekstensi `pdo_mysql`, dan log PHP-FPM/Apache.
 
 ## Instalasi dengan SCP
 
@@ -57,11 +99,11 @@ Ganti `USER`, `DOMAIN`, dan path sesuai domain HestiaCP. Jangan menaruh file pad
 
 ## Perilaku aplikasi
 
-- Semua parameter pencarian memakai prepared statement.
+- Semua parameter pencarian memakai prepared statement (`PDO::ATTR_EMULATE_PREPARES => false`).
 - Output katalog di-escape dengan `htmlspecialchars`.
 - Pagination dibatasi 10–50 baris per halaman; default 20.
 - Detail error koneksi tidak ditampilkan kepada pengunjung, tetapi dicatat melalui `error_log`.
-- Nilai `OPAC_SOURCE` adalah konstanta kode, sehingga tidak dapat diubah melalui query string.
+- Query memakai tabel standar InlisLite (`collections`, `catalogs`, `locations`, dan `collectionstatus`) tanpa membutuhkan database view.
 
 ## Verifikasi setelah pemasangan
 
@@ -81,5 +123,5 @@ Ganti `USER`, `DOMAIN`, dan path sesuai domain HestiaCP. Jangan menaruh file pad
 ## Pemeliharaan
 
 - Simpan backup file sebelum mengubah konstanta konfigurasi.
-- Jika struktur kolom view berubah, sesuaikan query `SELECT`, filter pencarian, dan tabel hasil secara bersamaan.
-- Gunakan HTTPS dan batasi akses database; file ini tidak menyediakan login admin.
+- Jika skema tabel InlisLite berubah, sesuaikan query `SELECT`, relasi `INNER JOIN`, filter pencarian, dan tabel hasil secara bersamaan.
+- Gunakan HTTPS dan batasi akses database (hanya `SELECT`); file ini tidak menyediakan login admin.

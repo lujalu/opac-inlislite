@@ -1,7 +1,9 @@
 <?php
 /**
  * OPAC InlisLite portabel (PHP 7.4+ / MySQL 5.7+).
- * Upload file ini ke hosting, lalu ubah konfigurasi di bawah.
+ * Upload file ini ke hosting, lalu ubah konfigurasi database di bawah.
+ * Query langsung ke tabel standar InlisLite: collections, catalogs,
+ * locations, dan collectionstatus; tidak membutuhkan database view.
  */
 const DB_HOST = '127.0.0.1';
 const DB_PORT = 3306;
@@ -9,7 +11,6 @@ const DB_NAME = 'inlislite';
 const DB_USER = 'pustaka';
 const DB_PASS = 'GANTI_PASSWORD_DATABASE';
 const DB_CHARSET = 'utf8mb4';
-const OPAC_SOURCE = 'v_opaconline2'; // nama view/tabel katalog yang tersedia di InlisLite
 const PAGE_SIZE = 20;
 
 function h($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
@@ -34,21 +35,31 @@ $total = 0;
 $error = null;
 
 try {
-    // Kolom tetap dan sumber divalidasi di kode; nilai pengguna hanya masuk sebagai parameter.
+    // Nama tabel dan kolom tetap; nilai pengguna hanya masuk sebagai parameter.
     $where = '';
     $params = [];
     if ($q !== '') {
         // Satu keyword mencari judul, pengarang, ISBN, subjek, barcode, dan nomor panggil.
-        $where = ' WHERE (Title LIKE :q1 OR Author LIKE :q2 OR ISBN LIKE :q3 OR Subject LIKE :q4 OR NomorBarcode LIKE :q5 OR CallNumber LIKE :q6)';
+        $where = ' WHERE (cat.Title LIKE :q1 OR cat.Author LIKE :q2 OR cat.ISBN LIKE :q3 OR cat.Subject LIKE :q4 OR col.NomorBarcode LIKE :q5 OR col.CallNumber LIKE :q6)';
         $needle = '%' . $q . '%';
         for ($i = 1; $i <= 6; $i++) $params[':q' . $i] = $needle;
     }
     $pdo = db();
-    $count = $pdo->prepare('SELECT COUNT(*) FROM `' . OPAC_SOURCE . '`' . $where);
+    $countSql = 'SELECT COUNT(*) FROM collections AS col INNER JOIN catalogs AS cat ON cat.ID = col.Catalog_id' .
+        ' INNER JOIN locations AS loc ON loc.ID = col.Location_id' .
+        ' INNER JOIN collectionstatus AS stat ON stat.ID = col.Status_id' .
+        ' WHERE 1=1' . ($q !== '' ? ' AND' . substr($where, 6) : '');
+    $count = $pdo->prepare($countSql);
     $count->execute($params);
     $total = (int)$count->fetchColumn();
 
-    $sql = 'SELECT ID, NomorBarcode, Title, Author, Publikasi, ISBN, PhysicalDescription, Subject, CallNumber, Lokasi, Status FROM `' . OPAC_SOURCE . '`' . $where . ' ORDER BY Title ASC LIMIT :limit OFFSET :offset';
+    $sql = 'SELECT col.ID, col.NomorBarcode, cat.Title, cat.Author, cat.Publikasi, cat.ISBN, cat.PhysicalDescription, cat.Subject, col.CallNumber, loc.Name AS Lokasi, stat.Name AS Status' .
+        ' FROM collections AS col' .
+        ' INNER JOIN catalogs AS cat ON cat.ID = col.Catalog_id' .
+        ' INNER JOIN locations AS loc ON loc.ID = col.Location_id' .
+        ' INNER JOIN collectionstatus AS stat ON stat.ID = col.Status_id' .
+        ' WHERE 1=1' . ($q !== '' ? ' AND' . substr($where, 6) : '') .
+        ' ORDER BY cat.Title ASC LIMIT :limit OFFSET :offset';
     $stmt = $pdo->prepare($sql);
     foreach ($params as $key => $value) $stmt->bindValue($key, $value, PDO::PARAM_STR);
     $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
