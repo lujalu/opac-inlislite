@@ -111,7 +111,7 @@ sudo install -o USER -g USER -m 0644 /tmp/opac-inlislite.php \
   /home/USER/web/DOMAIN/public_html/opac-inlislite.php
 ```
 
-Ganti `USER`, `DOMAIN`, dan path sesuai domain HestiaCP. Jangan menaruh file pada direktori backup atau direktori konfigurasi.
+Ganti `USER`, `DOMAIN`, dan path sesuai domain dan aturan di webserver. Jangan menaruh file pada direktori backup atau direktori konfigurasi.
 
 ## Perilaku aplikasi
 
