@@ -1,6 +1,6 @@
 <?php
 /**
- * OPAC InlisLite portabel (PHP 7.4+ / MySQL 5.7+).
+ * OPAC InlisLite portabel (PHP 5.6+ / MySQL 5.7+).
  * Upload file ini ke hosting, lalu ubah konfigurasi database di bawah.
  * Query langsung ke tabel standar InlisLite: collections, catalogs,
  * locations, dan collectionstatus; tidak membutuhkan database view.
@@ -26,9 +26,9 @@ function db() {
     return $pdo;
 }
 
-$q = trim((string)($_GET['q'] ?? ''));
-$page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = min(50, max(10, (int)($_GET['per_page'] ?? PAGE_SIZE)));
+$q = trim((string)(isset($_GET['q']) ? $_GET['q'] : ''));
+$page = max(1, (int)(isset($_GET['page']) ? $_GET['page'] : 1));
+$perPage = min(50, max(10, (int)(isset($_GET['per_page']) ? $_GET['per_page'] : PAGE_SIZE)));
 $offset = ($page - 1) * $perPage;
 $rows = [];
 $total = 0;
@@ -66,14 +66,14 @@ try {
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $rows = $stmt->fetchAll();
-} catch (Throwable $e) {
+} catch (Exception $e) {
     // Detail koneksi tidak ditampilkan ke publik.
     $error = 'Katalog belum dapat diakses. Periksa konfigurasi database atau hubungi administrator.';
     error_log('OPAC InlisLite: ' . $e->getMessage());
 }
 $totalPages = max(1, (int)ceil($total / $perPage));
 if ($page > $totalPages && $total > 0) $page = $totalPages;
-function pageUrl($page) { return '?' . http_build_query(['q' => $_GET['q'] ?? '', 'per_page' => $_GET['per_page'] ?? PAGE_SIZE, 'page' => $page]); }
+function pageUrl($page) { return '?' . http_build_query(['q' => (isset($_GET['q']) ? $_GET['q'] : ''), 'per_page' => (isset($_GET['per_page']) ? $_GET['per_page'] : PAGE_SIZE), 'page' => $page]); }
 ?>
 <!doctype html>
 <html lang="id">

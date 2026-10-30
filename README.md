@@ -4,7 +4,7 @@ Halaman PHP mandiri (`opac-inlislite.php`) untuk menampilkan dan mencari katalog
 
 ## Persyaratan
 
-- PHP 7.4 atau lebih baru dengan ekstensi `pdo` dan `pdo_mysql`.
+- PHP 5.6 atau lebih baru dengan ekstensi `pdo` dan `pdo_mysql`.
 - MySQL 5.7+/MariaDB dengan akses baca (`SELECT`) ke database InlisLite.
 - Web server Apache atau Nginx yang menjalankan PHP-FPM.
 - Database InlisLite standar dengan tabel `collections`, `catalogs`, `locations`, dan `collectionstatus`.
