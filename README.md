@@ -209,5 +209,3 @@ Pembaruan 2026-10-30 (commit `1d1939b`) menyesuaikan file utama untuk PHP 5.6:
 Pemeriksaan grammar menggunakan `php-parser` 3.7.0 berhasil untuk target PHP 5.6, 7.4, dan 8.3; script sebelum perbaikan gagal pada grammar 5.6. `git diff --check` pada perubahan kompatibilitas juga berhasil. Pemeriksaan grammar tidak menjalankan script: runtime/database PHP 5.6 belum diuji karena interpreter tersebut tidak tersedia. Perbaikan sudah dipush ke `origin/main`, tetapi belum dideploy ke server pada tindak lanjut ini.
 
 Untuk verifikasi di hosting, jalankan `php -v`, `php -m`, dan `php -l opac-inlislite.php` dengan binary PHP 5.6. Pastikan `PDO` dan `pdo_mysql` aktif serta versi PHP-FPM domain sesuai; versi CLI dapat berbeda dari domain. Kemudian jalankan checklist HTTP pada bagian verifikasi setelah pemasangan, termasuk pencarian dan pagination.
-
-
