@@ -11,7 +11,7 @@ Halaman PHP mandiri (`opac-inlislite.php`) untuk menampilkan dan mencari katalog
 
 ## Relasi Tabel & Query Langsung
 
-Aplikasi melakukan `INNER JOIN` langsung ke empat tabel dasar InlisLite sehingga menghasilkan jumlah baris yang identik dengan view `v_opaconline2` (terverifikasi **239.391 baris** pada database production `inlis20117`):
+Aplikasi melakukan `INNER JOIN` langsung ke empat tabel dasar InlisLite sehingga menghasilkan jumlah baris yang identik dengan jumlah koleksi pustaka:
 
 ```d2
 direction: right
@@ -153,7 +153,7 @@ Panel yang hanya menyediakan izin tingkat database akan memberi `SELECT` pada se
 1. Masuk ke Control Panel
 2. Upload file ke document root domain, misalnya:
    `/home/USER/DOMAIN/public_html/opac-inlislite.php`.
-3. Pastikan versi PHP domain menyediakan `pdo_mysql` (PHP-FPM 8.2/8.3 umum dipakai pada Snowi).
+3. Pastikan versi PHP domain menyediakan `pdo_mysql` (PHP-FPM 8.2/8.3).
 4. Buat database dan user melalui menu **DB**, atau gunakan database InlisLite yang sudah ada. Jika database berada di host lain, ubah `DB_HOST` dan izinkan koneksi dari server web.
 5. Uji URL melalui HTTPS. Jika halaman menampilkan pesan katalog belum dapat diakses, periksa kredensial, nama database, izin `SELECT` pada keempat tabel, ekstensi `pdo_mysql`, dan log PHP-FPM/Apache.
 
@@ -162,13 +162,13 @@ Panel yang hanya menyediakan izin tingkat database akan memberi `SELECT` pada se
 Dari komputer yang memiliki akses SSH ke server:
 
 ```bash
-scp opac-inlislite.php pus@192.168.1.247:/tmp/
-ssh pus@192.168.1.247
+scp opac-inlislite.php user@ipserver:/tmp/
+ssh user@ipserver
 sudo install -o USER -g USER -m 0644 /tmp/opac-inlislite.php \
   /home/USER/web/DOMAIN/public_html/opac-inlislite.php
 ```
 
-Ganti `USER`, `DOMAIN`, dan path sesuai domain HestiaCP. Jangan menaruh file pada direktori backup atau direktori konfigurasi.
+Ganti `USER`, `DOMAIN`, dan path sesuai domain dan aturan di webserver. Jangan menaruh file pada direktori backup atau direktori konfigurasi.
 
 ## Perilaku aplikasi
 
@@ -210,4 +210,4 @@ Pemeriksaan grammar menggunakan `php-parser` 3.7.0 berhasil untuk target PHP 5.6
 
 Untuk verifikasi di hosting, jalankan `php -v`, `php -m`, dan `php -l opac-inlislite.php` dengan binary PHP 5.6. Pastikan `PDO` dan `pdo_mysql` aktif serta versi PHP-FPM domain sesuai; versi CLI dapat berbeda dari domain. Kemudian jalankan checklist HTTP pada bagian verifikasi setelah pemasangan, termasuk pencarian dan pagination.
 
-Laporan lengkap tersedia di [dokumentasi webpus](https://github.com/lujalu/webpus/blob/main/docs/opac-inlislite.md#kompatibilitas-php-56). Verifikasi jumlah baris production tanggal 2026-10-28 merupakan pemeriksaan query read-only, bukan uji runtime PHP 5.6.
+
