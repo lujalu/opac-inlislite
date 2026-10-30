@@ -105,8 +105,8 @@ Pemeriksaan ulang grammar menggunakan `php-parser` 3.7.0 pada 2026-10-30 lolos u
 Dari komputer yang memiliki akses SSH ke server:
 
 ```bash
-scp opac-inlislite.php pus@192.168.1.247:/tmp/
-ssh pus@192.168.1.247
+scp opac-inlislite.php user@ipserver:/tmp/
+ssh user@ipserver
 sudo install -o USER -g USER -m 0644 /tmp/opac-inlislite.php \
   /home/USER/web/DOMAIN/public_html/opac-inlislite.php
 ```
@@ -153,4 +153,4 @@ Pemeriksaan grammar menggunakan `php-parser` 3.7.0 berhasil untuk target PHP 5.6
 
 Untuk verifikasi di hosting, jalankan `php -v`, `php -m`, dan `php -l opac-inlislite.php` dengan binary PHP 5.6. Pastikan `PDO` dan `pdo_mysql` aktif serta versi PHP-FPM domain sesuai; versi CLI dapat berbeda dari domain. Kemudian jalankan checklist HTTP pada bagian verifikasi setelah pemasangan, termasuk pencarian dan pagination.
 
-Laporan lengkap tersedia di [dokumentasi webpus](https://github.com/lujalu/webpus/blob/main/docs/opac-inlislite.md#kompatibilitas-php-56). Verifikasi jumlah baris production tanggal 2026-10-28 merupakan pemeriksaan query read-only, bukan uji runtime PHP 5.6.
+
