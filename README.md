@@ -1,6 +1,6 @@
 # OPAC InlisLite Portabel
 
-Halaman PHP mandiri (`opac-inlislite.php`) untuk menampilkan dan mencari katalog InlisLite langsung dari tabel database standar (`collections`, `catalogs`, `locations`, dan `collectionstatus`). Aplikasi tidak membutuhkan framework, Composer, database view tambahan (`v_opaconline2`), atau build step.
+Halaman PHP mandiri (`opac-inlislite.php`) untuk menampilkan dan mencari katalog InlisLite di InlisLite Versi 3.2 , langsung dari tabel database standar (`collections`, `catalogs`, `locations`, dan `collectionstatus`). Aplikasi tidak membutuhkan framework, Composer, database view tambahan (`v_opaconline2`), atau build step.
 
 ## Persyaratan
 
