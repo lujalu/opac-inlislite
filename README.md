@@ -11,7 +11,7 @@ Halaman PHP mandiri (`opac-inlislite.php`) untuk menampilkan dan mencari katalog
 
 ## Relasi Tabel & Query Langsung
 
-Aplikasi melakukan `INNER JOIN` langsung ke empat tabel dasar InlisLite sehingga menghasilkan jumlah baris yang identik dengan view `v_opaconline2` (terverifikasi **239.391 baris** pada database production `inlis20117`):
+Aplikasi melakukan `INNER JOIN` langsung ke empat tabel dasar InlisLite sehingga menghasilkan jumlah baris yang identik dengan jumlah koleksi pustaka:
 
 ```d2
 direction: right
