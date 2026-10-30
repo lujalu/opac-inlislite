@@ -48,6 +48,22 @@ ORDER BY cat.Title ASC
 LIMIT :limit OFFSET :offset;
 ```
 
+## Unduhan menurut versi PHP
+
+File `opac-inlislite.php` yang sama dapat digunakan pada PHP 5.6, PHP 7, dan PHP 8; versi terpisah tidak diperlukan. Pilih baris sesuai versi PHP domain hosting:
+
+| PHP hosting | Unduhan |
+| --- | --- |
+| PHP 5.6 | [Unduh OPAC untuk PHP 5.6](https://raw.githubusercontent.com/lujalu/opac-inlislite/main/opac-inlislite.php) |
+| PHP 7.0–7.4 | [Unduh OPAC untuk PHP 7](https://raw.githubusercontent.com/lujalu/opac-inlislite/main/opac-inlislite.php) |
+| PHP 8 | [Unduh OPAC untuk PHP 8](https://raw.githubusercontent.com/lujalu/opac-inlislite/main/opac-inlislite.php) |
+
+Semua tautan mengarah ke file universal yang sama. Jika browser menampilkan kode, gunakan **Save link as / Simpan tautan sebagai** dan simpan dengan nama `opac-inlislite.php`. Edit konfigurasi database, lalu upload sesuai panduan instalasi.
+
+Sintaks `isset()`, `Exception`, array, serta API PDO yang dipakai tersedia pada ketiga generasi PHP. Penggantian `??` untuk PHP 5.6 tetap kompatibel dengan PHP 7/8. `Exception` tetap menangkap kegagalan PDO pada PHP 7/8; objek `Error` tidak ditangkap. Nilai untuk `htmlspecialchars()` dikonversi ke string, termasuk nilai database `NULL`.
+
+Pemeriksaan ulang grammar menggunakan `php-parser` 3.7.0 pada 2026-10-30 lolos untuk PHP 5.6, seluruh PHP 7.0–7.4, dan PHP 8.0–8.3 pada file kedua repositori. Ini verifikasi sintaks dan tinjauan API; uji eksekusi HTTP/database pada masing-masing versi PHP belum dilakukan. Pastikan `PDO`/`pdo_mysql` tersedia dan jalankan checklist setelah pemasangan memakai versi PHP domain yang dipilih.
+
 ## Instalasi cepat
 
 1. Salin `opac-inlislite.php` ke document root situs, atau ke subdirektori seperti `public_html/opac/`.
