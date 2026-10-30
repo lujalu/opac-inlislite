@@ -73,23 +73,80 @@ Pemeriksaan ulang grammar menggunakan `php-parser` 3.7.0 pada 2026-10-30 lolos u
    const DB_HOST = '127.0.0.1';
    const DB_PORT = 3306;
    const DB_NAME = 'nama_database';
-   const DB_USER = 'user_baca';
+   const DB_USER = 'opac_read';
    const DB_PASS = 'password_database';
    ```
 
    Gunakan user database khusus baca dan batasi host sesuai kebutuhan. Jangan menyimpan password yang sama dengan password SSH atau panel.
 
-3. Pastikan user database dapat membaca keempat tabel katalog:
-
-   ```sql
-   GRANT SELECT ON nama_database.collections TO 'user_baca'@'localhost';
-   GRANT SELECT ON nama_database.catalogs TO 'user_baca'@'localhost';
-   GRANT SELECT ON nama_database.locations TO 'user_baca'@'localhost';
-   GRANT SELECT ON nama_database.collectionstatus TO 'user_baca'@'localhost';
-   FLUSH PRIVILEGES;
-   ```
+3. Buat user khusus dengan izin `SELECT` pada empat tabel sesuai [panduan user read-only](#user-database-read-only).
 
 4. Buka `https://domain-anda.example/opac-inlislite.php`. Uji pencarian judul, pengarang, ISBN, barcode, subjek, dan nomor panggil.
+
+## User database read-only
+
+> **Sebaiknya buat user database khusus OPAC dengan akses Read (baca/`SELECT`) saja. Jangan memakai user database untuk layanan utama InlisLite, akun administrator, atau `root`.** Akun layanan utama biasanya membutuhkan izin menambah, mengubah, dan menghapus data; OPAC publik hanya membutuhkan pembacaan katalog. Pisahkan username dan password agar pembatasan akses OPAC tidak mengganggu layanan utama.
+
+### Membuat user read-only melalui MySQL/MariaDB
+
+1. Minta administrator database menjalankan langkah ini pada **server database**, melalui klien MySQL/MariaDB atau tab SQL phpMyAdmin dengan akun yang berwenang membuat user dan memberi izin. Contoh masuk melalui terminal:
+
+   ```bash
+   mysql -h HOST_DATABASE -P 3306 -u ADMIN_DATABASE -p
+   ```
+
+   Opsi `-p` meminta password secara interaktif. Jangan menuliskan password langsung pada perintah terminal.
+
+2. Tentukan nama database dan host asal koneksi. Contoh berikut memakai database `inlislite`, user baru `opac_read`, serta server web `192.168.1.247`. Ganti sesuai instalasi Anda. Host pada `'opac_read'@'192.168.1.247'` adalah **alamat asal server web yang dilihat database**, bukan alamat server database atau browser pengunjung. Jika memakai NAT, gunakan alamat sumber yang terlihat setelah NAT. Hindari host `%` karena mengizinkan asal koneksi dari mana saja. Untuk database dan PHP pada mesin yang sama, gunakan akun host lokal yang sesuai dengan koneksi Anda (`localhost` atau `127.0.0.1`); keduanya tidak selalu cocok dengan akun yang sama. Seluruh perintah berikut harus memakai pasangan user dan host yang konsisten.
+
+3. Buat akun **baru** dengan password kuat dan unik; ganti placeholder password sebelum menjalankan SQL:
+
+   ```sql
+   CREATE USER 'opac_read'@'192.168.1.247'
+     IDENTIFIED BY 'GANTI_DENGAN_PASSWORD_ACAK_UNIK';
+
+   GRANT SELECT ON `inlislite`.`collections`
+     TO 'opac_read'@'192.168.1.247';
+   GRANT SELECT ON `inlislite`.`catalogs`
+     TO 'opac_read'@'192.168.1.247';
+   GRANT SELECT ON `inlislite`.`locations`
+     TO 'opac_read'@'192.168.1.247';
+   GRANT SELECT ON `inlislite`.`collectionstatus`
+     TO 'opac_read'@'192.168.1.247';
+
+   SHOW GRANTS FOR 'opac_read'@'192.168.1.247';
+   ```
+
+   Berikan `SELECT` hanya untuk empat tabel tersebut, bukan `ALL PRIVILEGES`, izin global `*.*`, atau seluruh database. Jangan berikan `INSERT`, `UPDATE`, `DELETE`, `CREATE`, `DROP`, `ALTER`, `FILE`, maupun `GRANT OPTION`. `USAGE ON *.*` yang mungkin muncul pada hasil `SHOW GRANTS` berarti akun dapat dikenali, bukan izin membaca semua database. Akun baru seharusnya hanya memiliki `USAGE` dan empat grant `SELECT` di atas, tanpa role tambahan. Jika `CREATE USER` gagal karena akun sudah ada, jangan langsung melanjutkan: gunakan nama akun baru atau minta DBA mengaudit izin langsung dan role akun tersebut; menambahkan `SELECT` tidak mencabut izin lama. `FLUSH PRIVILEGES` tidak diperlukan setelah `CREATE USER` dan `GRANT`.
+
+4. Dari **server web**, uji koneksi memakai akun baru dan password yang sama:
+
+   ```bash
+   mysql -h HOST_DATABASE -P 3306 -u opac_read -p inlislite
+   ```
+
+   Kemudian jalankan:
+
+   ```sql
+   SELECT CURRENT_USER();
+   SHOW GRANTS;
+   SELECT col.ID, cat.Title, loc.Name AS Lokasi, stat.Name AS Status
+   FROM collections AS col
+   INNER JOIN catalogs AS cat ON cat.ID = col.Catalog_id
+   INNER JOIN locations AS loc ON loc.ID = col.Location_id
+   INNER JOIN collectionstatus AS stat ON stat.ID = col.Status_id
+   LIMIT 1;
+   ```
+
+   `CURRENT_USER()` menunjukkan akun user/host yang benar-benar dipilih MySQL/MariaDB. Query harus berhasil (hasil kosong tetap valid bila katalog belum berisi data). Periksa bahwa grant hanya mencakup empat tabel dan tidak ada role yang memberi izin lebih luas. Tidak perlu mencoba `INSERT`, `UPDATE`, atau `DELETE` pada database production untuk menguji pembatasan ini. Jika koneksi gagal, periksa kecocokan host akun, password, jaringan/firewall, dan konfigurasi koneksi database. Untuk database remote, batasi firewall port database hanya bagi server web yang memerlukan akses.
+
+5. Isi konfigurasi OPAC dengan `DB_USER = 'opac_read'`, password baru pada `DB_PASS`, nama database pada `DB_NAME`, dan alamat **server database** pada `DB_HOST`. Simpan kredensial hanya pada konfigurasi server; jangan commit password asli ke repositori. Setelah pemasangan, uji daftar katalog, pencarian, dan pagination melalui browser. Akun layanan utama InlisLite tetap memakai kredensialnya sendiri.
+
+### Membuat user melalui panel hosting/phpMyAdmin
+
+Jika tidak memiliki hak `CREATE USER`, gunakan menu **MySQL Databases / Database Users** pada panel hosting atau minta penyedia hosting/DBA membuat akun khusus. Pada cPanel, buat user baru, hubungkan ke database InlisLite yang sudah ada, lalu pilih hanya **SELECT** pada **Manage User Privileges**; jangan pilih **ALL PRIVILEGES**. Nama database/user dapat diberi prefix akun hosting: gunakan nama lengkap dari panel pada konfigurasi PHP.
+
+Panel yang hanya menyediakan izin tingkat database akan memberi `SELECT` pada seluruh tabel database tersebut, sehingga cakupannya lebih luas daripada kebutuhan empat tabel OPAC. Untuk pembatasan empat tabel, minta DBA menjalankan grant per tabel di atas atau gunakan pengaturan izin tingkat tabel jika tersedia. Di phpMyAdmin dengan hak administrator, gunakan **User accounts → Add user account**, tentukan host, jangan centang hak global, lalu atur izin `SELECT` per tabel. Nama menu dapat berbeda menurut versi panel. Akhiri dengan pemeriksaan `SHOW GRANTS` dan uji koneksi dari server web seperti langkah di atas; jangan mengubah hak akun layanan utama.
 
 ## Instalasi pada CPANEL
 
